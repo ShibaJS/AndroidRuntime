@@ -25,6 +25,7 @@ class ShibaConfiguration {
 }
 
 object Shiba {
+    internal var appComponent: ShibaView? = null
     val viewMapping = ArrayMap<String, IViewMapper<*>>()
     val configuration = ShibaConfiguration()
     internal val components = ArrayMap<String, ShibaView>()

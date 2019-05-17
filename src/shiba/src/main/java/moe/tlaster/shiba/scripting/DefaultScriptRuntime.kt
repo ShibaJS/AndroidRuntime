@@ -41,6 +41,20 @@ class DefaultScriptRuntime : IScriptRuntime {
         return null
     }
 
+    private val runShibaApp = object: JSFunction(runtime, "runShibaApp") {
+        fun runShibaApp(view: JSValue?): Boolean {
+            if (view == null) {
+                return false
+            }
+            val component = JSViewVisitor.visit(view)
+            if (component is ShibaView) {
+                Shiba.appComponent = component
+                return true
+            }
+            return false
+        }
+    }
+
     private val registerComponent = object : JSFunction(runtime, "registerComponent") {
         fun registerComponent(name: String?, view: JSValue?): Boolean {
             if (name.isNullOrEmpty()) {
@@ -67,6 +81,7 @@ class DefaultScriptRuntime : IScriptRuntime {
         addTypeConversion(JsonConversion())
         addTypeConversion(PromiseConversion())
         runtime.property("registerComponent", registerComponent)
+        runtime.property("runShibaApp", runShibaApp)
     }
 
 }

@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import moe.tlaster.shiba.dataBinding.ShibaBinding
 
-fun <T : View> View.findName(name: String) : T? {
+fun <T : View> View.findName(name: String): T? {
     return findView { it ->
         it.getTag(R.id.shiba_view_name_key) == name
     }
@@ -63,12 +63,15 @@ class ShibaHost : FrameLayout, IShibaContext, INotifyPropertyChanged {
             field = value
             removeAllViews()
             if (Shiba.components.containsKey(field)) {
-                val component = Shiba.components[field]
-                addView(NativeRenderer.render(component, this))
+                viewComponent = Shiba.components[field]
             }
         }
 
-
+    internal var viewComponent: ShibaView? = null
+        set(value) {
+            field = value
+            addView(NativeRenderer.render(field, this))
+        }
 
 //
 //    public fun load(view: moe.tlaster.shiba.type.View?, dataContext: Any?) {
@@ -96,7 +99,7 @@ class ShibaHost : FrameLayout, IShibaContext, INotifyPropertyChanged {
         // TODO: Release all resources
     }
 
-    fun <T : View> findViewByName(name: String) : T? {
+    fun <T : View> findViewByName(name: String): T? {
         return findView { it ->
             it.getTag(R.id.shiba_view_name_key) == name
         }
