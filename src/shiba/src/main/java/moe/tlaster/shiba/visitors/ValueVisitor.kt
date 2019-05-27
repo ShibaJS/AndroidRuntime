@@ -17,6 +17,7 @@ import moe.tlaster.shiba.type.Property
 import moe.tlaster.shiba.type.ShibaExtension
 import moe.tlaster.shiba.type.ShibaFunction
 import moe.tlaster.shiba.type.ShibaObject
+import org.liquidplayer.javascript.JSValue
 
 
 internal object ValueVisitor {
@@ -28,6 +29,7 @@ internal object ValueVisitor {
             is ObjectNode -> visit(item, context)
             is ArrayNode -> visit(item, context)
             is ValueNode -> visit(item, context)
+            is JSValue -> visit(item, context)
             null -> null
             else -> item
         }
@@ -203,5 +205,30 @@ internal object ValueVisitor {
                 else -> null
             }
         }
+    }
+
+    private fun visit(item: JSValue, context: IShibaContext?): Any? {
+        return when {
+            item.isObject -> return visitJSObject(item)
+            item.isArray -> return visitJSArray(item)
+            item.isBoolean -> item.toBoolean()
+            item.isNumber -> item.toNumber()
+            item.isString -> item.toString()
+            item.isNull -> null
+            else -> item
+        }
+    }
+
+    private fun visitJSArray(item: JSValue): List<Any?> {
+        return item.toJSArray().map { visit(it, null) }
+    }
+
+    private fun visitJSObject(item: JSValue): ShibaObject {
+        val jsobj = item.toObject()
+        val obj = ShibaObject()
+        item.toObject().propertyNames().forEach {
+            obj[it] = visit(jsobj.property(it), null)
+        }
+        return obj
     }
 }
