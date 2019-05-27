@@ -75,7 +75,7 @@ internal object JSViewVisitor {
                 return Property(name, propertyValue.toNative())
             }
             ValueType.Custom -> {
-                return Property(name, ValueVisitor.visit(Singleton.get<ObjectMapper>().readTree(propertyValue.toString()), null))
+                return Property(name, ValueVisitor.visit(propertyValue, null))
             }
             null -> {
                 return Property(name, null)
