@@ -26,17 +26,21 @@ class DefaultScriptRuntime : IScriptRuntime {
         runtime.property(name, value.invoke(runtime))
     }
 
-    override fun execute(name: String, parameters: Array<Any?>): Any? {
-        val obj = runtime.property(name).toFunction()
-        if (obj != null) {
+    override fun callFunction(name: String, vararg parameters: Any?): Any? {
+        val obj = runtime.property(name).toObject()
+        if (obj.isFunction) {
             kotlin.runCatching {
-                obj.apply(null, parameters.map { it.toJSValue(runtime) }.toTypedArray())?.toNative()
+                // TODO: sometime cast will fail
+                (obj as JSFunction).apply(null, parameters.map { it.toJSValue(runtime) }.toTypedArray())?.toNative()
             }.onSuccess {
                 return it
             }.onFailure {
                 Log.e("script", it.message)
                 it.printStackTrace()
             }
+        } else {
+            Log.i("err", "func")
+            Log.i("err", obj.toString())
         }
         return null
     }
@@ -75,9 +79,9 @@ class DefaultScriptRuntime : IScriptRuntime {
     }
 
     init {
-        addObject("http") {
-            Http(it)
-        }
+//        addObject("http") {
+//            Http(it)
+//        }
         addTypeConversion(JsonConversion())
         addTypeConversion(PromiseConversion())
         runtime.property("registerComponent", registerComponent)

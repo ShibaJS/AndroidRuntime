@@ -22,6 +22,7 @@ class ShibaConfiguration {
     var platformType = "Android"
     val commonProperties = ArrayList<ICommonProperty>()
     val extensionExecutors = ArrayList<IExtensionExecutor>()
+    val nativeConverter = androidx.collection.ArrayMap<String, ((List<Any?>) -> Any?)>()
 }
 
 object Shiba {
@@ -39,15 +40,15 @@ object Shiba {
         addExtensionExecutor(BindingExecutor())
         addExtensionExecutor(JsonExecutor())
         configuration.commonProperties.add(GridProperty())
-        if (configuration.scriptRuntime is DefaultScriptRuntime) {
-            (configuration.scriptRuntime as DefaultScriptRuntime).addObject("storage") {
-                Storage(application, it)
-            }
-        }
+//        if (configuration.scriptRuntime is DefaultScriptRuntime) {
+////            (configuration.scriptRuntime as DefaultScriptRuntime).addObject("storage") {
+////                Storage(application, it)
+////            }
+//        }
     }
 
-    public fun addConverter(converter: String) {
-        configuration.scriptRuntime.execute(converter)
+    public fun addConverter(name: String, converter: ((List<Any?>) -> Any?)) {
+        configuration.nativeConverter[name] = converter
     }
 
     public fun addRenderer(name: String, mapper: IViewMapper<*>) {

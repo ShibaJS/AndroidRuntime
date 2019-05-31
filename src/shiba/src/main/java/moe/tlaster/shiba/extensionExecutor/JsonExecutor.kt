@@ -31,17 +31,19 @@ class JsonConverter : ShibaConverter() {
             return toNative(value)
         }
 
-        var token = value as JsonNode
+        var token: JsonNode? = value
         parameter.split('.').forEach {
-            token = token[it]
+            token = token?.get(it)
         }
 
         return toNative(token)
     }
 
 
-    private fun toNative(jsonNode: JsonNode): Any? {
-
+    private fun toNative(jsonNode: JsonNode?): Any? {
+        if (jsonNode == null) {
+            return null
+        }
         return when {
             jsonNode.isNull -> null
             jsonNode.isBoolean -> jsonNode.booleanValue()

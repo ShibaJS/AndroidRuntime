@@ -67,6 +67,14 @@ class ShibaHost : FrameLayout, IShibaContext, INotifyPropertyChanged {
             }
         }
 
+    var creator: String? = null
+        set(value) {
+            field = value
+            if (value != null) {
+                addView(NativeRenderer.renderFromFunction(value, this))
+            }
+        }
+
     internal var viewComponent: ShibaView? = null
         set(value) {
             field = value

@@ -61,9 +61,9 @@ class ShibaBinding(val path: String) {
     }
     var converter: ShibaConverter? = null
     var parameter: Any? = null
-    internal var targetView: NativeView? = null
+    var targetView: NativeView? = null
     private var isChanging = false
-    internal var viewSetter: ((NativeView, Any?) -> Unit)? = null
+    var viewSetter: ((NativeView, Any?) -> Unit)? = null
 
 
     private fun updateBindingSource(newValue: Any?) {
@@ -87,13 +87,15 @@ class ShibaBinding(val path: String) {
         setValueToView()
     }
 
-    internal fun setValueToView() {
+    fun setValueToView() {
         val source = bindingSources.lastOrNull()
         val target = targetView
         val setter = viewSetter
         if (source != null && target != null && setter != null && !isChanging) {
             isChanging = true
-            setter.invoke(target, executeConverter(getValueFromDataContext(source.dataContext, source.propertyPath)))
+            val value = getValueFromDataContext(source.dataContext, source.propertyPath)
+            val converValue = executeConverter(value)
+            setter.invoke(target, converValue)
             isChanging = false
         }
     }

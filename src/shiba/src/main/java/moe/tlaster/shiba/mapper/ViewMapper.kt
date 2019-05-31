@@ -23,11 +23,16 @@ interface IValueMap {
     val setter: (NativeView, Any?) -> Unit
 }
 
+internal interface IAllowChildViewMapper<T : NativeView> : IViewMapper<T>
+{
+    fun addChild(parent: NativeView, child: NativeView)
+}
+
 open class PropertyMap(override val name: String, override val setter: (NativeView, Any?) -> Unit, override val valueType: Class<*>? = null) : IValueMap
 
 class TwoWayPropertyMap(name: String, setter: (NativeView, Any?) -> Unit, val twowayInitializer: ((NativeView, (Any?) -> Unit) -> Unit)) : PropertyMap(name, setter)
 
-open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
+abstract class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
     private val _propertyCache by lazy {
         propertyMaps()
     }
@@ -58,7 +63,7 @@ open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
         return target
     }
 
-    private fun setValue(context: IShibaContext, value: Any?, propertyMap: PropertyMap, target: TNativeView) {
+    protected fun setValue(context: IShibaContext, value: Any?, propertyMap: PropertyMap, target: TNativeView) {
         val targetValue = if (propertyMap.valueType != null && value != null && propertyMap.valueType == value.javaClass) {
             value
         } else {
@@ -85,9 +90,7 @@ open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
         }
     }
 
-    open override fun createNativeView(context: IShibaContext): TNativeView {
-        return NativeView(context.getContext()) as TNativeView
-    }
+    abstract override fun createNativeView(context: IShibaContext): TNativeView
 
     protected open fun propertyMaps(): ArrayList<PropertyMap> {
         return arrayListOf(
@@ -101,8 +104,7 @@ open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
                     val param = view.layoutParams
                     if (it is Number) param.width = it.toInt().dp
                     else if (it is String) {
-                        if (it.equals("wrap_content", true)) param.width = ViewGroup.LayoutParams.WRAP_CONTENT
-                        else if (it.equals("match_parent", true)) param.width = ViewGroup.LayoutParams.MATCH_PARENT
+                        if (it.equals("fill", true)) param.width = ViewGroup.LayoutParams.MATCH_PARENT
                     }
                     view.layoutParams = param
                 }),
@@ -111,8 +113,7 @@ open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
                     if (it is Number) {
                         param.height = it.toInt().dp
                     } else if (it is String) {
-                        if (it.equals("wrap_content", true)) param.height = ViewGroup.LayoutParams.WRAP_CONTENT
-                        else if (it.equals("match_parent", true)) param.height = ViewGroup.LayoutParams.MATCH_PARENT
+                        if (it.equals("fill", true)) param.height = ViewGroup.LayoutParams.MATCH_PARENT
                     }
                     view.layoutParams = param
                 }),
@@ -122,10 +123,10 @@ open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
                         when (it) {
                             is ShibaObject -> {
                                 lp.setMargins(
-                                        it["left"]?.toString()?.toInt()?.dp ?: 0,
-                                        it["top"]?.toString()?.toInt()?.dp ?: 0,
-                                        it["right"]?.toString()?.toInt()?.dp ?: 0,
-                                        it["bottom"]?.toString()?.toInt()?.dp ?: 0)
+                                        it["left"]?.toString()?.toDouble()?.dp ?: 0,
+                                        it["top"]?.toString()?.toDouble()?.dp ?: 0,
+                                        it["right"]?.toString()?.toDouble()?.dp ?: 0,
+                                        it["bottom"]?.toString()?.toDouble()?.dp ?: 0)
                             }
                             is Number -> {
                                 lp.setMargins(
@@ -141,10 +142,10 @@ open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
                     when (it) {
                         is ShibaObject -> {
                             view.setPaddingRelative(
-                                    it["left"]?.toString()?.toInt()?.dp ?: 0,
-                                    it["top"]?.toString()?.toInt()?.dp ?: 0,
-                                    it["right"]?.toString()?.toInt()?.dp ?: 0,
-                                    it["bottom"]?.toString()?.toInt()?.dp ?: 0)
+                                    it["left"]?.toString()?.toDouble()?.dp ?: 0,
+                                    it["top"]?.toString()?.toDouble()?.dp ?: 0,
+                                    it["right"]?.toString()?.toDouble()?.dp ?: 0,
+                                    it["bottom"]?.toString()?.toDouble()?.dp ?: 0)
                         }
                         is Number -> {
                             view.setPaddingRelative(
@@ -157,7 +158,11 @@ open class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
                 }),
                 PropertyMap("alpha", { view, it -> if (it is Number) view.alpha = it.toFloat() }),
                 PropertyMap("name", { view, it -> if (it is String) view.setTag(R.id.shiba_view_name_key, it) }),
-                PropertyMap("background", { view, it -> })
+                PropertyMap("background", { view, it ->
+                    when (it) {
+                        is Int -> view.setBackgroundColor(it)
+                    }
+                })
         ).apply {
             if (defaultPropertyMap != null) {
                 add(defaultPropertyMap!!)
