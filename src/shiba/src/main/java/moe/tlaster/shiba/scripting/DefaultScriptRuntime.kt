@@ -11,7 +11,6 @@ import org.liquidplayer.javascript.JSFunction
 import org.liquidplayer.javascript.JSValue
 
 class DefaultScriptRuntime : IScriptRuntime {
-
     private val runtime = JSContext()
 
     override fun execute(script: String): Any? {
@@ -27,7 +26,14 @@ class DefaultScriptRuntime : IScriptRuntime {
     }
 
     override fun callFunction(name: String, vararg parameters: Any?): Any? {
-        val obj = runtime.property(name).toObject()
+        return callFunction(runtime, name, *parameters)
+    }
+
+    override fun callFunction(instance: Any?, name: String, vararg parameters: Any?): Any? {
+        if (instance !is JSValue || !instance.isObject) {
+            return null
+        }
+        val obj = instance.toObject().property(name).toObject()
         if (obj.isFunction) {
             kotlin.runCatching {
                 // TODO: sometime cast will fail
@@ -41,6 +47,25 @@ class DefaultScriptRuntime : IScriptRuntime {
         } else {
             Log.i("err", "func")
             Log.i("err", obj.toString())
+        }
+        return null
+    }
+
+    override fun isArray(instance: Any?): Boolean {
+        return instance is JSValue && instance.isArray
+    }
+
+    override fun toArray(instance: Any?): List<Any> {
+        if (isArray(instance)) {
+            return (instance as JSValue).toJSArray()
+        }
+        return emptyList()
+    }
+
+    override fun getProperty(instance: Any?, name: String): Any? {
+        if (instance is JSValue && instance.isObject) {
+            val obj = instance.toObject()
+            return obj.property(name).toNative()
         }
         return null
     }
