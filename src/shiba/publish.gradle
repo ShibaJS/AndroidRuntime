@@ -4,24 +4,38 @@ apply plugin: 'com.jfrog.bintray'
 def siteUrl = "https://github.com/Tlaster/Shiba"
 def gitUrl = siteUrl + ".git"
 def issueUrl = siteUrl + "/issues"
-def buildNum = System.getenv("TRAVIS_BUILD_NUMBER")
+def buildNum = System.getenv("TRAVIS_BUILD_NUMBER") ?: 0
 group = "moe.tlaster"
 version = "0.3.$buildNum"
+
+project.ext {
+    mavDevelopers = ["tlaster":"tlaster"]
+    mavSiteUrl = siteUrl
+    mavGitUrl = gitUrl
+    mavProjectName = 'Shiba'
+    mavPublishToInternalRepo = true
+    mavRepoInternalUrl = "build/"
+    mavLibraryLicenses = ["MIT":'https://opensource.org/licenses/mit-license.php']
+    mavLibraryDescription = "Lightweight Cross-Platform UI framework"
+    mavVersion = version
+}
 
 publishing {
     publications {
         Production(MavenPublication) {
-            artifact("$buildDir/outputs/aar/app-release.aar")
+            artifact("$buildDir/libs/shiba-$version-sources.jar") {
+                classifier "sources"
+            }
+            artifact("$buildDir/libs/shiba-$version-javadoc.jar") {
+                classifier "javadoc"
+            }
             groupId this.group
             artifactId 'shiba'
             version this.version
 
             pom.withXml {
                 def dependenciesNode = asNode().appendNode('dependencies')
-
-                // Iterate over the implementation dependencies (we don't want the test ones), adding a <dependency> node for each
                 configurations.implementation.allDependencies.each {
-                    // Ensure dependencies such as fileTree are not included in the pom.
                     if (it.name != 'unspecified') {
                         def dependencyNode = dependenciesNode.appendNode('dependency')
                         dependencyNode.appendNode('groupId', it.group)
@@ -50,3 +64,4 @@ bintray {
         issueTrackerUrl = issueUrl
     }
 }
+apply from: 'https://raw.githubusercontent.com/sky-uk/gradle-maven-plugin/master/gradle-mavenizer.gradle'

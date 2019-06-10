@@ -3,7 +3,6 @@ plugins {
     kotlin("android")
     kotlin("android.extensions")
     kotlin("kapt")
-//    id("com.github.dcendents.android-maven")
 }
 
 
