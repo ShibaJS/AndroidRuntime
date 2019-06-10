@@ -35,11 +35,9 @@ publishing {
 }
 
 bintray {
-    user = project.hasProperty('bintrayUser') ?: System.getenv('BINTRAY_USER')
-    key = project.hasProperty('bintrayApiKey') ?: System.getenv('BINTRAY_API_KEY')
-    publications = ['Production']
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_API_KEY')
     configurations = ['archives']
-    override = true
     pkg {
         repo = 'Shiba'
         name = 'Shiba'
@@ -50,6 +48,5 @@ bintray {
         websiteUrl = siteUrl
         vcsUrl = gitUrl
         issueTrackerUrl = issueUrl
-        dryRun = true
     }
 }

@@ -1,2 +1,2 @@
 cd src
-./gradlew clean build
+./gradlew :shiba:clean :shiba:build
