@@ -4,7 +4,6 @@ import android.util.Log
 import moe.tlaster.shiba.Shiba
 import moe.tlaster.shiba.ShibaView
 import moe.tlaster.shiba.scripting.conversion.*
-import moe.tlaster.shiba.scripting.runtime.Http
 import moe.tlaster.shiba.scripting.visitors.JSViewVisitor
 import org.liquidplayer.javascript.JSContext
 import org.liquidplayer.javascript.JSFunction
@@ -23,6 +22,27 @@ class DefaultScriptRuntime : IScriptRuntime {
 
     public fun addObject(name: String, value: (JSContext) -> Any) {
         runtime.property(name, value.invoke(runtime))
+    }
+
+    override fun hasFunction(name: String): Boolean {
+        return hasFunction(runtime, name)
+    }
+
+    override fun hasFunction(instance: Any?, name: String): Boolean {
+        if (instance !is JSValue || !instance.isObject) {
+            return false
+        }
+        return instance.toObject().takeIf {
+            it.hasProperty(name)
+        }?.let {
+            it.property(name)
+        }?.takeIf {
+            it.isObject
+        }?.let {
+            it.toObject()
+        }?.let {
+            it.isFunction
+        } ?: false
     }
 
     override fun callFunction(name: String, vararg parameters: Any?): Any? {

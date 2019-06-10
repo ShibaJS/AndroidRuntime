@@ -81,6 +81,13 @@ class ShibaHost : FrameLayout, IShibaContext, INotifyPropertyChanged {
             addView(NativeRenderer.render(field, this))
         }
 
+    override fun eventCallback(name: String) {
+        if (Shiba.configuration.scriptRuntime.hasFunction(name)) {
+            Shiba.configuration.scriptRuntime.callFunction(name, dataContext)
+        } else if (dataContext != null && Shiba.configuration.scriptRuntime.hasFunction(dataContext, name)) {
+            Shiba.configuration.scriptRuntime.callFunction(dataContext, name, dataContext)
+        }
+    }
 //
 //    public fun load(view: moe.tlaster.shiba.type.View?, dataContext: Any?) {
 //        if (view != null) {
