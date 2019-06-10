@@ -35,6 +35,7 @@ android {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8", appConfig.kotlinVersion))
+    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.31")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.+")
     implementation("androidx.appcompat:appcompat:1.+")
     implementation("androidx.gridlayout:gridlayout:1.+")

@@ -1,2 +1,2 @@
 cd src
-./gradlew :shiba:clean :shiba:build :shiba:install :shiba:bintrayUpload
+./gradlew :shiba:clean :shiba:build :shiba:bintrayUpload
