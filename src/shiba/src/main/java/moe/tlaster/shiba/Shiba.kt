@@ -1,19 +1,21 @@
 package moe.tlaster.shiba
 
-import android.app.Application
 import android.content.Context
 import android.util.ArrayMap
+import android.util.Log
 import moe.tlaster.shiba.commonProperty.GridProperty
 import moe.tlaster.shiba.commonProperty.ICommonProperty
 import moe.tlaster.shiba.extensionExecutor.BindingExecutor
 import moe.tlaster.shiba.extensionExecutor.IExtensionExecutor
 import moe.tlaster.shiba.extensionExecutor.JsonExecutor
 import moe.tlaster.shiba.mapper.*
-import moe.tlaster.shiba.scripting.*
-import moe.tlaster.shiba.scripting.conversion.JsonConversion
+import moe.tlaster.shiba.scripting.DefaultScriptRuntime
+import moe.tlaster.shiba.scripting.IScriptRuntime
 import moe.tlaster.shiba.scripting.runtime.Http
 import moe.tlaster.shiba.scripting.runtime.Storage
 import moe.tlaster.shiba.type.View
+import org.liquidplayer.javascript.JSFunction
+import org.liquidplayer.javascript.JSObject
 
 internal typealias NativeView = android.view.View
 internal typealias ShibaView = View
@@ -32,12 +34,13 @@ object Shiba {
     val configuration = ShibaConfiguration()
     internal val components = ArrayMap<String, ShibaView>()
 
-    public fun init(application: Context) {
+    fun init(application: Context) {
         addRenderer("stack", StackMapper())
         addRenderer("text", TextMapper())
         addRenderer("input", InputMapper())
         addRenderer("list", ListMapper())
         addRenderer("grid", GridMapper())
+        addRenderer("button", ButtonMapper())
         addExtensionExecutor(BindingExecutor())
         addExtensionExecutor(JsonExecutor())
         configuration.commonProperties.add(GridProperty())
@@ -48,18 +51,29 @@ object Shiba {
             (configuration.scriptRuntime as DefaultScriptRuntime).addObject("http") {
                 Http(it)
             }
+            (configuration.scriptRuntime as DefaultScriptRuntime).addObject("console") {
+                object : JSObject(it) {
+                    init {
+                        property("log", object : JSFunction(it, "log") {
+                            fun log(msg: String) {
+                                Log.i("Javascript", msg)
+                            }
+                        })
+                    }
+                }
+            }
         }
     }
 
-    public fun addConverter(name: String, converter: ((List<Any?>) -> Any?)) {
+    fun addConverter(name: String, converter: ((List<Any?>) -> Any?)) {
         configuration.nativeConverter[name] = converter
     }
 
-    public fun addRenderer(name: String, mapper: IViewMapper<*>) {
+    fun addRenderer(name: String, mapper: IViewMapper<*>) {
         viewMapping[name] = mapper
     }
 
-    public fun addExtensionExecutor(executor: IExtensionExecutor) {
+    fun addExtensionExecutor(executor: IExtensionExecutor) {
         configuration.extensionExecutors.add(executor)
     }
 }

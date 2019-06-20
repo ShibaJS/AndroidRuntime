@@ -34,17 +34,6 @@ private fun <T : View> View.findView(predicate: (View) -> Boolean): T? {
 class ShibaHost : FrameLayout, IShibaContext, INotifyPropertyChanged {
     override var propertyChanged: Event<String> = Event()
     override val bindings: ArrayList<ShibaBinding> = ArrayList()
-    internal var hostBinding: ShibaBinding? = null
-        set(value) {
-            field?.release()
-            value?.targetView = this
-            value?.viewSetter = { view, any ->
-                if (view is ShibaHost) {
-                    view.dataContext = any
-                }
-            }
-            field = value
-        }
 
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
@@ -56,7 +45,18 @@ class ShibaHost : FrameLayout, IShibaContext, INotifyPropertyChanged {
         set(value) {
             field = value
             propertyChanged.invoke(this, "dataContext")
+            onDataContextChanged(value)
         }
+
+    private fun onDataContextChanged(value: Any?) {
+        if (Shiba.configuration.scriptRuntime.isObject(value) && value != null) {
+            Shiba.configuration.scriptRuntime.injectFunction<String>(value, "onPropertyChanged") { name ->
+                bindings.filter { it.actualPath == name }.forEach {
+                    it.setValueToView()
+                }
+            }
+        }
+    }
 
     var component: String? = null
         set(value) {
@@ -107,11 +107,6 @@ class ShibaHost : FrameLayout, IShibaContext, INotifyPropertyChanged {
         super.removeAllViews()
         bindings.forEach { it.release() }
         bindings.clear()
-    }
-
-    override fun onDetachedFromWindow() {
-        super.onDetachedFromWindow()
-        // TODO: Release all resources
     }
 
     fun <T : View> findViewByName(name: String): T? {

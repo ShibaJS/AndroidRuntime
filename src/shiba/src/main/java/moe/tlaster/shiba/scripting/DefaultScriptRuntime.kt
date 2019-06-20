@@ -1,10 +1,15 @@
 package moe.tlaster.shiba.scripting
 
 import android.util.Log
+import awaitString
+import com.github.kittinunf.fuel.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
 import moe.tlaster.shiba.Shiba
 import moe.tlaster.shiba.ShibaView
 import moe.tlaster.shiba.scripting.conversion.*
 import moe.tlaster.shiba.scripting.visitors.JSViewVisitor
+import moe.tlaster.shiba.visitors.ValueVisitor
 import org.liquidplayer.javascript.JSContext
 import org.liquidplayer.javascript.JSFunction
 import org.liquidplayer.javascript.JSValue
@@ -20,7 +25,39 @@ class DefaultScriptRuntime : IScriptRuntime {
         conversions.add(conversion)
     }
 
-    public fun addObject(name: String, value: (JSContext) -> Any) {
+    override fun injectFunction(instance: Any?, name: String, block: () -> Unit) {
+        if (instance !is JSValue || !instance.isObject) {
+            return
+        }
+        val obj = instance.toObject()
+        object : JSFunction(runtime, "func") {
+            fun func() {
+                block.invoke()
+            }
+        }.let {
+            obj.property(name, it)
+        }
+    }
+
+    override fun <T: Any> injectFunction(instance: Any?, name: String, block: (T) -> Unit) {
+        if (instance !is JSValue || !instance.isObject) {
+            return
+        }
+        val obj = instance.toObject()
+        object : JSFunction(runtime, "func") {
+            fun func(value: JSValue) {
+                block.invoke(value.toNative() as T)
+            }
+        }.let {
+            obj.property(name, it)
+        }
+    }
+
+    override fun isObject(instance: Any?): Boolean {
+        return instance is JSValue && instance.isObject
+    }
+
+    fun addObject(name: String, value: (JSContext) -> Any) {
         runtime.property(name, value.invoke(runtime))
     }
 
@@ -57,11 +94,12 @@ class DefaultScriptRuntime : IScriptRuntime {
         if (obj.isFunction) {
             kotlin.runCatching {
                 // TODO: sometime cast will fail
-                (obj as JSFunction).apply(null, parameters.map { it.toJSValue(runtime) }.toTypedArray())?.toNative()
+                (obj as JSFunction).apply(instance.toObject(), parameters.map { it.toJSValue(runtime) }.toTypedArray())
+                    ?.toNative()
             }.onSuccess {
                 return it
             }.onFailure {
-                Log.e("script", it.message)
+                Log.e("script", it.message + "")
                 it.printStackTrace()
             }
         } else {
@@ -90,7 +128,48 @@ class DefaultScriptRuntime : IScriptRuntime {
         return null
     }
 
-    private val runShibaApp = object: JSFunction(runtime, "runShibaApp") {
+    private val http = object : JSFunction(runtime, "http") {
+        fun http(link: String, param: JSValue?): JSValue {
+            return GlobalScope.async {
+                if (param == null) {
+                    return@async link.httpGet().awaitString()
+                } else {
+                    val params = ValueVisitor.visit(param, null) as Map<String, Any?>
+                    val request = when (params["method"]) {
+
+                        "HEAD" -> link.httpHead()
+                        "DELETE" -> link.httpDelete()
+                        "PUT" -> link.httpPut()
+                        "POST" -> link.httpPost()
+                        "GET" -> link.httpGet()
+                        else -> link.httpGet()
+                    }
+                    if (params.containsKey("headers")) {
+                        params["headers"]?.let {
+                            it as Map<String, Any?>
+                        }?.also {
+                            request.header(it.map { it.key to it.value?.toString() as Any }.toMap())
+                        }
+                    }
+
+                    if (params.containsKey("body")) {
+                        when (val body = params["body"]) {
+                            is String -> {
+                                request.body(body)
+                            }
+                            is ByteArray -> {
+                                request.body(body)
+                            }
+                        }
+                    }
+
+                    return@async request.awaitString()
+                }
+            }.toJSValue(context)
+        }
+    }
+
+    private val runShibaApp = object : JSFunction(runtime, "runShibaApp") {
         fun runShibaApp(view: JSValue?): Boolean {
             if (view == null) {
                 return false
@@ -124,11 +203,9 @@ class DefaultScriptRuntime : IScriptRuntime {
     }
 
     init {
-//        addObject("http") {
-//            Http(it)
-//        }
         addTypeConversion(JsonConversion())
         addTypeConversion(PromiseConversion())
+        runtime.property("rehttp", http)
         runtime.property("registerComponent", registerComponent)
         runtime.property("runShibaApp", runShibaApp)
     }

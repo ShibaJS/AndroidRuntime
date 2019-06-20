@@ -4,7 +4,7 @@ import android.content.Context
 import moe.tlaster.shiba.dataBinding.ShibaBinding
 import moe.tlaster.shiba.scripting.visitors.JSViewVisitor
 import moe.tlaster.shiba.visitors.ValueVisitor
-import org.liquidplayer.javascript.JSValue
+import org.liquidplayer.javascript.*
 
 interface IShibaContext {
     fun getContext() : Context

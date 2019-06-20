@@ -56,6 +56,7 @@ abstract class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
     }
 
     override fun map(view: View, context: IShibaContext): TNativeView {
+
         val target = createNativeView(context).apply {
             layoutParams = getViewLayoutParams()
         }
@@ -79,12 +80,8 @@ abstract class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
         return target
     }
 
-    protected fun setValue(context: IShibaContext, value: Any?, propertyMap: PropertyMap, target: TNativeView) {
-        val targetValue = if (propertyMap.valueType != null && value != null && propertyMap.valueType == value.javaClass) {
-            value
-        } else {
-            ValueVisitor.visit(value, context)
-        }
+    protected open fun setValue(context: IShibaContext, value: Any?, propertyMap: PropertyMap, target: TNativeView) {
+        val targetValue = convertSetValueType(propertyMap, value, context)
 
         when (targetValue) {
             is ShibaBinding -> {
@@ -103,6 +100,18 @@ abstract class ViewMapper<TNativeView : NativeView> : IViewMapper<TNativeView> {
             else -> {
                 propertyMap.setter.invoke(target, targetValue)
             }
+        }
+    }
+
+    protected open fun convertSetValueType(
+        propertyMap: PropertyMap,
+        value: Any?,
+        context: IShibaContext
+    ): Any? {
+        return if (propertyMap.valueType != null && value != null && propertyMap.valueType == value.javaClass) {
+            value
+        } else {
+            ValueVisitor.visit(value, context)
         }
     }
 

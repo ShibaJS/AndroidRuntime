@@ -34,12 +34,12 @@ android {
 
 dependencies {
     implementation(kotlin("stdlib-jdk8", appConfig.kotlinVersion))
-    implementation("org.jetbrains.kotlin:kotlin-reflect:1.3.31")
+    implementation(kotlin("reflect", appConfig.kotlinVersion))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.+")
     implementation("androidx.appcompat:appcompat:1.+")
     implementation("androidx.gridlayout:gridlayout:1.+")
     implementation("androidx.recyclerview:recyclerview:1.+")
-    implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta1")
+    implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta2")
     implementation("com.github.LiquidPlayer:LiquidCore:0.6.+")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.9.+")
     implementation("com.github.kittinunf.fuel:fuel:1.+")

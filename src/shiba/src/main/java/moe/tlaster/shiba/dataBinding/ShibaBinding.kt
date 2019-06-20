@@ -40,14 +40,14 @@ private fun getRawPropertyMethods(dataContext: Any?): Map<String, PropertyMethod
 
 private fun generatePropertyMethod(method: Map.Entry<String, List<Method>>): PropertyMethod {
     val getter = method.value.firstOrNull { !it.parameterTypes.any() }
-    val setter = method.value.firstOrNull { method ->
-        method.parameterTypes.count { it == (getter?.returnType ?: it) } == 1
+    val setter = method.value.firstOrNull { setterMethod ->
+        setterMethod.parameterTypes.count { it == (getter?.returnType ?: it) } == 1
     }
     return PropertyMethod(getter, setter)
 }
 
 
-class ShibaBinding(val path: String) {
+class ShibaBinding(val path: String, val actualPath: String = "") {
     private val bindingSources = ArrayList<BindingContext>()
 
     init {
@@ -64,7 +64,6 @@ class ShibaBinding(val path: String) {
     var targetView: NativeView? = null
     private var isChanging = false
     var viewSetter: ((NativeView, Any?) -> Unit)? = null
-
 
     private fun updateBindingSource(newValue: Any?) {
         releaseBindingSources()
@@ -94,8 +93,8 @@ class ShibaBinding(val path: String) {
         if (source != null && target != null && setter != null && !isChanging) {
             isChanging = true
             val value = getValueFromDataContext(source.dataContext, source.propertyPath)
-            val converValue = executeConverter(value)
-            setter.invoke(target, converValue)
+            val convertValue = executeConverter(value)
+            setter.invoke(target, convertValue)
             isChanging = false
         }
     }

@@ -8,7 +8,7 @@ open class ShibaFunctionExecutor {
         return if (Shiba.configuration.nativeConverter.containsKey(function.name)) {
             Shiba.configuration.nativeConverter[function.name]?.invoke(function.parameter.map { getParameterValue(it, dataContext) })
         } else {
-            Shiba.configuration.scriptRuntime.callFunction(function.name, function.parameter.map { getParameterValue(it, dataContext) }.toTypedArray())
+            Shiba.configuration.scriptRuntime.callFunction(function.name, *function.parameter.map { getParameterValue(it, dataContext) }.toTypedArray())
         }
     }
 

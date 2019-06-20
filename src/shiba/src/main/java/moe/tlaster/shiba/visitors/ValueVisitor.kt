@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.databind.node.ValueNode
 import moe.tlaster.shiba.*
-import moe.tlaster.shiba.NativeView
-import moe.tlaster.shiba.ShibaView
 import moe.tlaster.shiba.common.Singleton
 import moe.tlaster.shiba.converters.RawConverter
 import moe.tlaster.shiba.converters.ShibaConverterParameter
@@ -19,7 +17,7 @@ import moe.tlaster.shiba.type.Property
 import moe.tlaster.shiba.type.ShibaExtension
 import moe.tlaster.shiba.type.ShibaFunction
 import moe.tlaster.shiba.type.ShibaObject
-import org.liquidplayer.javascript.JSValue
+import org.liquidplayer.javascript.*
 
 
 internal object ValueVisitor {
@@ -51,14 +49,6 @@ internal object ValueVisitor {
             if (Shiba.components.contains(tree.viewName)) {
                 tree.properties.add(Property("componentName", tree.viewName))
                 return shibaHostMapper.map(tree, context)
-//                // TODO: Properties
-//                return ShibaHost(context.getContext()).apply {
-//                    component = tree.viewName
-//                    dataContext = context.dataContext
-//                    hostBinding = ShibaBinding("dataContext").apply {
-//                        source = context
-//                    }
-//                }
             }
             throw ClassNotFoundException("${tree.viewName} not found")
         } else {

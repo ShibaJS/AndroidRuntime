@@ -11,5 +11,8 @@ interface IScriptRuntime {
     fun addTypeConversion(conversion: ITypeConversion)
     fun getProperty(instance: Any?, name: String): Any?
     fun isArray(instance: Any?): Boolean
+    fun isObject(instance: Any?): Boolean
     fun toArray(instance: Any?): List<Any>
+    fun injectFunction(instance: Any?, name: String, block: () -> Unit)
+    fun <T: Any> injectFunction(instance: Any?, name: String, block: (T) -> Unit)
 }

@@ -1,7 +1,6 @@
 package moe.tlaster.shiba.extensionExecutor
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
 import moe.tlaster.shiba.IShibaContext
 import moe.tlaster.shiba.common.Singleton
 import moe.tlaster.shiba.converters.ShibaConverter
@@ -13,7 +12,7 @@ class JsonExecutor(override val name: String = "json") : IExtensionExecutor {
     override fun provideValue(context: IShibaContext?, extension: ShibaExtension): Any? {
         val path = extension.value
         val bindingPath = dataContextPath
-        return ShibaBinding(bindingPath).apply {
+        return ShibaBinding(bindingPath, path.toString()).apply {
             source = context
             parameter = path
             converter = Singleton.get<JsonConverter>()
